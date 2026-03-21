@@ -1,9 +1,12 @@
-import { createRouter } from "./factory";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { describeRoute, openAPISpecs } from "hono-openapi";
+import { apiReference } from "@scalar/hono-api-reference";
 import notFound from "stoker/middlewares/not-found";
 import onError from "stoker/middlewares/on-error";
-import { apiReference } from "@scalar/hono-api-reference";
+
+import { createRouter } from "./factory";
+import authRouter from "./modules/auth";
 
 const app = createRouter();
 
@@ -12,31 +15,50 @@ app.use(logger());
 app.use(cors());
 
 // Internal modules
-import authRouter from "./modules/auth";
-
 app.route("/", authRouter);
 
-// OpenAPI Specification
-app.doc("/openapi", {
-  openapi: "3.0.0",
-  info: {
-    version: "1.0.0",
-    title: "Catat API Documentations",
-    description: "API for Catat Backend Built with Hono",
-  },
-});
+// Basic Route
+app.get(
+  "/",
+  describeRoute({
+    summary: "Health Check",
+    description:
+      "Returns a simple message to verify the API is up and running.",
+    responses: {
+      200: {
+        description: "Successful response",
+        content: {
+          "text/plain": {
+            schema: { type: "string", example: "Catat API is up and running!" },
+          },
+        },
+      },
+    },
+  }),
+  (c) => c.text("Catat API is up and running!"),
+);
+
+// OpenAPI Specification using hono-openapi's middleware
+app.get(
+  "/openapi",
+  openAPISpecs(app, {
+    documentation: {
+      info: {
+        version: "1.0.0",
+        title: "Catat API Documentations",
+        description: "API for Catat Backend Built with Hono",
+      },
+    },
+  }),
+);
 
 // Scalar API Reference UI
 app.get(
   "/reference",
   apiReference({
-    // @ts-expect-error - 'spec' is valid in newer/older versions but types might be outdated
     spec: { url: "/openapi" },
-  }),
+  } as unknown as Parameters<typeof apiReference>[0]),
 );
-
-// Basic Route
-app.get("/", (c) => c.text("Catat API is up and running!"));
 
 // Apply Error Handlers
 app.notFound(notFound);
