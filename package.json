@@ -1,0 +1,44 @@
+{
+  "name": "catat-api",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "openapi:generate": "bun run src/scripts/generate-openapi.ts",
+    "build": "tsgo",
+    "start": "bun run dist/src/index.js",
+    "fl": "oxlint && oxfmt --write",
+    "format": "oxfmt --write",
+    "lint": "oxlint",
+    "check": "tsgo --noEmit",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:purge": "docker compose down -v",
+    "db:start": "docker compose up -d",
+    "db:stop": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.5.5",
+    "@hono/zod-openapi": "^1.2.2",
+    "@scalar/hono-api-reference": "^0.10.4",
+    "@t3-oss/env-core": "^0.13.10",
+    "better-auth": "^1.5.5",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
+    "hono": "^4.12.8",
+    "pg": "^8.20.0",
+    "stoker": "^2.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "25.5.0",
+    "@types/pg": "^8.18.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260317.1",
+    "drizzle-kit": "^0.31.10",
+    "openapi-ts-monorepo": "hey-api/openapi-ts",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0"
+  }
+}

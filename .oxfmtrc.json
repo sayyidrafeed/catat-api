@@ -1,0 +1,4 @@
+{
+  "printWidth": 80,
+  "ignorePatterns": [".agents/**", "src/components/ui/**", "src/**.gen.ts"]
+}
