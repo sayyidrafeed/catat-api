@@ -1,0 +1,115 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Catat API Documentations",
+    "description": "API for Catat Backend Built with Hono",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "getApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "putApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "postApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "deleteApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "options": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "optionsApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "head": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "headApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "patch": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "patchApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      },
+      "trace": {
+        "responses": {
+          "200": {
+            "description": "Better Auth Response"
+          }
+        },
+        "operationId": "traceApiAuth",
+        "summary": "Better Auth Base Handler",
+        "description": "Base endpoint for Better Auth flows."
+      }
+    },
+    "/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Catat API is up and running!"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getIndex",
+        "summary": "Health Check",
+        "description": "Returns a simple message to verify the API is up and running."
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}
