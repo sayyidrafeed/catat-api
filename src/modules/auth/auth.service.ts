@@ -13,9 +13,9 @@ export function isEmailAllowed(
 ): boolean {
   const normalized = email.trim().toLowerCase();
   if (!normalized) return false;
-  return allowedEmails.some(
-    (allowed) => allowed.trim().toLowerCase() === normalized,
-  );
+
+  const normalizedAllowlist = allowedEmails.map((e) => e.trim().toLowerCase());
+  return normalizedAllowlist.includes(normalized);
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
