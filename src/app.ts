@@ -6,13 +6,19 @@ import notFound from "stoker/middlewares/not-found";
 import onError from "stoker/middlewares/on-error";
 
 import { createRouter } from "./factory";
+import { env } from "./env";
 import authRouter from "./modules/auth";
 
 const app = createRouter();
 
 // Middlewares
 app.use(logger());
-app.use(cors());
+app.use(
+  cors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 // Internal modules
 app.route("/", authRouter);

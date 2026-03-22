@@ -6,86 +6,61 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/auth": {
+    "/api/auth/session": {
       "get": {
         "responses": {
           "200": {
-            "description": "Better Auth Response"
+            "description": "Session information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object"
+                    },
+                    "session": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "operationId": "getApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "put": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "putApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
+        "operationId": "getApiAuthSession",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current session",
+        "description": "Returns the current user's session information if authenticated."
+      }
+    },
+    "/api/auth/sign-out": {
       "post": {
         "responses": {
           "200": {
-            "description": "Better Auth Response"
+            "description": "Sign out successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "operationId": "postApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "delete": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "deleteApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "options": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "optionsApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "head": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "headApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "patch": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "patchApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
-      },
-      "trace": {
-        "responses": {
-          "200": {
-            "description": "Better Auth Response"
-          }
-        },
-        "operationId": "traceApiAuth",
-        "summary": "Better Auth Base Handler",
-        "description": "Base endpoint for Better Auth flows."
+        "operationId": "postApiAuthSign-out",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign out",
+        "description": "Signs out the current user by clearing their session."
       }
     },
     "/": {
