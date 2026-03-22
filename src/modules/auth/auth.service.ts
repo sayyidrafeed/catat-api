@@ -3,6 +3,21 @@ import { user, session, account } from "@/db/schema/auth-schema";
 import { eq } from "drizzle-orm";
 import type { User, Session, Account } from "./auth.schema";
 
+/**
+ * Pure function — checks whether an email is in the allowlist.
+ * Comparison is case-insensitive and trims surrounding whitespace.
+ */
+export function isEmailAllowed(
+  email: string,
+  allowedEmails: string[],
+): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return false;
+  return allowedEmails.some(
+    (allowed) => allowed.trim().toLowerCase() === normalized,
+  );
+}
+
 export async function getUserById(userId: string): Promise<User | null> {
   const result = await db
     .select()

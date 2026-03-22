@@ -1,23 +1,10 @@
-import { createRouter } from "../../factory";
 import { describeRoute } from "hono-openapi";
+
 import { auth } from "@/auth";
+import { createRouter } from "../../factory";
 import { getSessionHandler, signOutHandler } from "./auth.handlers";
 
 const authRouter = createRouter();
-
-authRouter.all(
-  "/api/auth",
-  describeRoute({
-    summary: "Better Auth Base Handler",
-    description: "Base endpoint for Better Auth flows.",
-    responses: {
-      200: {
-        description: "Better Auth Response",
-      },
-    },
-  }),
-  (c) => c.json({ message: "Better Auth endpoint" }, 200),
-);
 
 authRouter.get(
   "/api/auth/session",
@@ -69,8 +56,22 @@ authRouter.post(
   signOutHandler,
 );
 
-authRouter.on(["POST", "GET"], "/api/auth/**", (c) => {
-  return auth.handler(c.req.raw);
-});
+authRouter.on(
+  ["POST", "GET"],
+  "/api/auth/**",
+  describeRoute({
+    summary: "Better Auth Handler",
+    description: "Catch-all handler for Better Auth endpoints (login, callback, etc.)",
+    responses: {
+      200: {
+        description: "Better Auth Response",
+      },
+    },
+  }),
+  (c) => {
+    return auth.handler(c.req.raw);
+  },
+);
 
 export default authRouter;
+
