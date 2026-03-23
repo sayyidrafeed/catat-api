@@ -2,7 +2,10 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "@/db/schema/transactions-schema";
 import { z } from "zod";
 
-export const transactionSelectSchema = createSelectSchema(transactions);
+export const transactionSelectSchema = createSelectSchema(transactions, {
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
 
 // Base input schema without refinements
 const transactionBaseSchema = createInsertSchema(transactions, {
@@ -14,16 +17,12 @@ const transactionBaseSchema = createInsertSchema(transactions, {
   transactionDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD"),
-})
-  .omit({
-    id: true,
-    userId: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    amount: z.number().min(100, "Nominal minimal Rp100"),
-  });
+}).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const transactionInsertSchema = transactionBaseSchema.refine(
   (data) => {

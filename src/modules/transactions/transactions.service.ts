@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { transactions } from "@/db/schema/transactions-schema";
-import { eq, and, gte, lte, ilike, desc } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, desc, sql, sum } from "drizzle-orm";
 import type {
   NewTransaction,
   TransactionQuery,
@@ -88,10 +88,12 @@ export async function updateTransaction(
   if (data.amount && data.amount > MAX_TRANSACTION_AMOUNT) {
     await db.delete(transactions).where(eq(transactions.id, id));
     return await createTransaction(userId, {
-      ...existing,
-      ...data,
+      title: data.title ?? existing.title,
       amount: data.amount,
-    } as NewTransaction);
+      type: data.type ?? existing.type,
+      category: data.category ?? existing.category,
+      transactionDate: data.transactionDate ?? existing.transactionDate,
+    });
   }
 
   return await db
@@ -109,51 +111,87 @@ export async function deleteTransaction(userId: string, id: string) {
 }
 
 export async function getDashboardSummary(userId: string) {
-  const allTransactions = await db.query.transactions.findMany({
+  // 1. Get transaction totals (Income vs Expense)
+  const totals = await db
+    .select({
+      type: transactions.type,
+      total: sum(transactions.amount).mapWith(Number),
+    })
+    .from(transactions)
+    .where(eq(transactions.userId, userId))
+    .groupBy(transactions.type);
+
+  const totalIncome = totals.find((t) => t.type === "income")?.total ?? 0;
+  const totalExpense = totals.find((t) => t.type === "expense")?.total ?? 0;
+
+  // 2. Get totals by category (Expenses only)
+  const categoryTotals = await db
+    .select({
+      category: transactions.category,
+      total: sum(transactions.amount).mapWith(Number),
+    })
+    .from(transactions)
+    .where(
+      and(eq(transactions.userId, userId), eq(transactions.type, "expense")),
+    )
+    .groupBy(transactions.category);
+
+  // 3. Get totals by month
+  const monthTotals = await db
+    .select({
+      month: sql<string>`substring(${transactions.transactionDate}, 1, 7)`,
+      type: transactions.type,
+      total: sum(transactions.amount).mapWith(Number),
+    })
+    .from(transactions)
+    .where(eq(transactions.userId, userId))
+    .groupBy(
+      sql`substring(${transactions.transactionDate}, 1, 7)`,
+      transactions.type,
+    );
+
+  // 4. Get recent transactions
+  const recentTransactions = await db.query.transactions.findMany({
     where: eq(transactions.userId, userId),
-    orderBy: [desc(transactions.transactionDate)],
+    orderBy: [desc(transactions.transactionDate), desc(transactions.createdAt)],
+    limit: 10,
   });
 
-  const summary = {
-    totalIncome: 0,
-    totalExpense: 0,
-    netBalance: 0,
-    byCategory: {
-      fnb: 0,
-      laundry: 0,
-      transport: 0,
-      college: 0,
-      entertainment: 0,
-      other: 0,
-    },
-    byMonth: {} as Record<string, { income: number; expense: number }>,
+  // Assemble summary
+  const byCategory = {
+    fnb: 0,
+    laundry: 0,
+    transport: 0,
+    college: 0,
+    entertainment: 0,
+    other: 0,
   };
-
-  allTransactions.forEach((t) => {
-    const amount = Number(t.amount);
-    if (t.type === "income") {
-      summary.totalIncome += amount;
-    } else {
-      summary.totalExpense += amount;
-      summary.byCategory[t.category as keyof typeof summary.byCategory] +=
-        amount;
-    }
-
-    const month = t.transactionDate.substring(0, 7); // YYYY-MM
-    if (!summary.byMonth[month]) {
-      summary.byMonth[month] = { income: 0, expense: 0 };
-    }
-    if (t.type === "income") {
-      summary.byMonth[month].income += amount;
-    } else {
-      summary.byMonth[month].expense += amount;
+  categoryTotals.forEach((ct) => {
+    if (ct.category in byCategory) {
+      byCategory[ct.category as keyof typeof byCategory] = ct.total;
     }
   });
 
-  summary.netBalance = summary.totalIncome - summary.totalExpense;
+  const byMonth: Record<string, { income: number; expense: number }> = {};
+  monthTotals.forEach((mt) => {
+    if (!byMonth[mt.month]) {
+      byMonth[mt.month] = { income: 0, expense: 0 };
+    }
+    if (mt.type === "income") {
+      byMonth[mt.month].income = mt.total;
+    } else {
+      byMonth[mt.month].expense = mt.total;
+    }
+  });
 
   return {
-    summary,
-    recentTransactions: allTransactions.slice(0, 10),
+    summary: {
+      totalIncome,
+      totalExpense,
+      netBalance: totalIncome - totalExpense,
+      byCategory,
+      byMonth,
+    },
+    recentTransactions,
   };
 }

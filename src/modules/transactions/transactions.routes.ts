@@ -1,5 +1,5 @@
-import { describeRoute } from "hono-openapi";
-import { zValidator } from "@hono/zod-validator";
+import { createRoute } from "@hono/zod-openapi";
+import * as HttpStatus from "stoker/http-status-codes";
 
 import { createRouter } from "@/factory";
 import { requireAuth } from "@/middlewares/auth.middleware";
@@ -9,6 +9,7 @@ import {
   transactionInsertSchema,
   transactionParamSchema,
   transactionQuerySchema,
+  transactionResponseSchema,
   transactionUpdateSchema,
 } from "./transactions.schema";
 
@@ -16,194 +17,155 @@ const router = createRouter();
 
 router.use(requireAuth());
 
-router.post(
-  "/",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "Create a new transaction",
-    description:
-      "Creates a transaction for the authenticated user. Automatically splits amounts > 100jt.",
-    responses: {
-      201: {
-        description: "Transaction created successfully",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                message: { type: "string" },
-                data: {
-                  type: "object",
-                  properties: {
-                    transactions: { type: "array", items: { type: "object" } },
-                    totalCreated: { type: "number" },
-                  },
-                },
-                timestamp: { type: "string" },
-              },
-            },
-          },
+const createTransactionRoute = createRoute({
+  tags: ["Transactions"],
+  method: "post",
+  path: "/",
+  summary: "Create a new transaction",
+  description:
+    "Creates a transaction for the authenticated user. Automatically splits amounts > 100jt.",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: transactionInsertSchema,
         },
       },
-      401: { description: "Unauthorized" },
-      422: { description: "Validation error" },
     },
-  }),
-  zValidator("json", transactionInsertSchema),
-  handlers.createHandler,
-);
-
-router.get(
-  "/",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "List all transactions",
-    description: "Returns all transactions for the user with optional filters.",
-    responses: {
-      200: {
-        description: "List of transactions",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                message: { type: "string" },
-                data: {
-                  type: "object",
-                  properties: {
-                    transactions: { type: "array", items: { type: "object" } },
-                    total: { type: "number" },
-                  },
-                },
-                timestamp: { type: "string" },
-              },
-            },
-          },
+  },
+  responses: {
+    [HttpStatus.CREATED]: {
+      description: "Transaction created successfully",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
         },
       },
-      401: { description: "Unauthorized" },
     },
-  }),
-  zValidator("query", transactionQuerySchema),
-  handlers.listHandler,
-);
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+  },
+});
 
-router.get(
-  "/summary/dashboard",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "Get dashboard summary",
-    description:
-      "Calculates totals, aggregates by category and month, and returns recent transactions.",
-    responses: {
-      200: { description: "Dashboard summary retrieved" },
-      401: { description: "Unauthorized" },
-    },
-  }),
-  handlers.summaryHandler,
-);
-
-router.get(
-  "/:id",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "Get a single transaction",
-    responses: {
-      200: {
-        description: "Transaction details",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                message: { type: "string" },
-                data: {
-                  type: "object",
-                  properties: {
-                    transactions: { type: "array", items: { type: "object" } },
-                  },
-                },
-                timestamp: { type: "string" },
-              },
-            },
-          },
+const listTransactionsRoute = createRoute({
+  tags: ["Transactions"],
+  method: "get",
+  path: "/",
+  summary: "List all transactions",
+  description: "Returns all transactions for the user with optional filters.",
+  request: {
+    query: transactionQuerySchema,
+  },
+  responses: {
+    [HttpStatus.OK]: {
+      description: "List of transactions",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
         },
       },
-      401: { description: "Unauthorized" },
-      404: { description: "Transaction not found" },
     },
-  }),
-  zValidator("param", transactionParamSchema),
-  handlers.getOneHandler,
-);
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+  },
+});
 
-router.put(
-  "/:id",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "Update a transaction",
-    responses: {
-      200: {
-        description: "Transaction updated",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                message: { type: "string" },
-                data: {
-                  type: "object",
-                  properties: {
-                    transactions: { type: "array", items: { type: "object" } },
-                    totalCreated: { type: "number" },
-                  },
-                },
-                timestamp: { type: "string" },
-              },
-            },
-          },
+const dashboardSummaryRoute = createRoute({
+  tags: ["Transactions"],
+  method: "get",
+  path: "/summary/dashboard",
+  summary: "Get dashboard summary",
+  description:
+    "Calculates totals, aggregates by category and month, and returns recent transactions.",
+  responses: {
+    [HttpStatus.OK]: {
+      description: "Dashboard summary retrieved",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
         },
       },
-      401: { description: "Unauthorized" },
-      404: { description: "Transaction not found" },
     },
-  }),
-  zValidator("param", transactionParamSchema),
-  zValidator("json", transactionUpdateSchema),
-  handlers.updateHandler,
-);
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+  },
+});
 
-router.delete(
-  "/:id",
-  describeRoute({
-    tags: ["Transactions"],
-    summary: "Delete a transaction",
-    responses: {
-      200: {
-        description: "Transaction deleted",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                message: { type: "string" },
-                timestamp: { type: "string" },
-              },
-            },
-          },
+const getOneTransactionRoute = createRoute({
+  tags: ["Transactions"],
+  method: "get",
+  path: "/{id}",
+  summary: "Get a single transaction",
+  request: {
+    params: transactionParamSchema,
+  },
+  responses: {
+    [HttpStatus.OK]: {
+      description: "Transaction details",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
         },
       },
-      401: { description: "Unauthorized" },
-      404: { description: "Transaction not found" },
     },
-  }),
-  zValidator("param", transactionParamSchema),
-  handlers.deleteHandler,
-);
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+    [HttpStatus.NOT_FOUND]: { description: "Transaction not found" },
+  },
+});
+
+const updateTransactionRoute = createRoute({
+  tags: ["Transactions"],
+  method: "patch",
+  path: "/{id}",
+  summary: "Update a transaction",
+  request: {
+    params: transactionParamSchema,
+    body: {
+      content: {
+        "application/json": {
+          schema: transactionUpdateSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatus.OK]: {
+      description: "Transaction updated",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
+        },
+      },
+    },
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+    [HttpStatus.NOT_FOUND]: { description: "Transaction not found" },
+  },
+});
+
+const deleteTransactionRoute = createRoute({
+  tags: ["Transactions"],
+  method: "delete",
+  path: "/{id}",
+  summary: "Delete a transaction",
+  request: {
+    params: transactionParamSchema,
+  },
+  responses: {
+    [HttpStatus.OK]: {
+      description: "Transaction deleted",
+      content: {
+        "application/json": {
+          schema: transactionResponseSchema,
+        },
+      },
+    },
+    [HttpStatus.UNAUTHORIZED]: { description: "Unauthorized" },
+    [HttpStatus.NOT_FOUND]: { description: "Transaction not found" },
+  },
+});
+
+router.openapi(createTransactionRoute, handlers.createHandler);
+router.openapi(listTransactionsRoute, handlers.listHandler);
+router.openapi(dashboardSummaryRoute, handlers.summaryHandler);
+router.openapi(getOneTransactionRoute, handlers.getOneHandler);
+router.openapi(updateTransactionRoute, handlers.updateHandler);
+router.openapi(deleteTransactionRoute, handlers.deleteHandler);
 
 export default router;

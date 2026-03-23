@@ -1,14 +1,11 @@
+import type { AppEnv } from "@/factory";
 import type { Context } from "hono";
-import type { TransactionQuery } from "./transactions.schema";
 import * as HttpStatus from "stoker/http-status-codes";
 import * as service from "./transactions.service";
-import type { AppEnv } from "@/factory";
 
 export const createHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
-
-  const data = await c.req.json();
+  const user = c.get("user")!;
+  const data = c.req.valid("json" as never);
 
   const result = await service.createTransaction(user.id, data);
 
@@ -32,15 +29,10 @@ export const createHandler = async (c: Context<AppEnv>) => {
 };
 
 export const listHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
+  const user = c.get("user")!;
+  const query = c.req.valid("query" as never);
 
-  const query = c.req.query();
-
-  const result = await service.getTransactions(
-    user.id,
-    query as unknown as TransactionQuery,
-  );
+  const result = await service.getTransactions(user.id, query);
 
   return c.json(
     {
@@ -57,12 +49,10 @@ export const listHandler = async (c: Context<AppEnv>) => {
 };
 
 export const getOneHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
+  const user = c.get("user")!;
+  const { id } = c.req.valid("param" as never);
 
-  const id = c.req.param("id");
-
-  const result = await service.getTransactionById(user.id, id!);
+  const result = await service.getTransactionById(user.id, id);
 
   if (!result) {
     return c.json(
@@ -90,13 +80,11 @@ export const getOneHandler = async (c: Context<AppEnv>) => {
 };
 
 export const updateHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
+  const user = c.get("user")!;
+  const { id } = c.req.valid("param" as never);
+  const data = c.req.valid("json" as never);
 
-  const id = c.req.param("id");
-  const data = await c.req.json();
-
-  const result = await service.updateTransaction(user.id, id!, data);
+  const result = await service.updateTransaction(user.id, id, data);
 
   if (!result) {
     return c.json(
@@ -130,12 +118,10 @@ export const updateHandler = async (c: Context<AppEnv>) => {
 };
 
 export const deleteHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
+  const user = c.get("user")!;
+  const { id } = c.req.valid("param" as never);
 
-  const id = c.req.param("id");
-
-  const result = await service.deleteTransaction(user.id, id!);
+  const result = await service.deleteTransaction(user.id, id);
 
   if (!result || result.length === 0) {
     return c.json(
@@ -160,9 +146,7 @@ export const deleteHandler = async (c: Context<AppEnv>) => {
 };
 
 export const summaryHandler = async (c: Context<AppEnv>) => {
-  const user = c.get("user");
-  if (!user) return c.json({ success: false, message: "Unauthorized" }, 401);
-
+  const user = c.get("user")!;
   const result = await service.getDashboardSummary(user.id);
 
   return c.json(
