@@ -64,7 +64,8 @@ authRouter.on(
   describeRoute({
     tags: ["Auth"],
     summary: "Better Auth Handler",
-    description: "Catch-all handler for Better Auth endpoints (login, callback, etc.)",
+    description:
+      "Catch-all handler for Better Auth endpoints (login, callback, etc.)",
     responses: {
       200: {
         description: "Better Auth Response",
@@ -77,4 +78,3 @@ authRouter.on(
 );
 
 export default authRouter;
-

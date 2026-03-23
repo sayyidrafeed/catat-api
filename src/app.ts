@@ -8,6 +8,7 @@ import onError from "stoker/middlewares/on-error";
 import { createRouter } from "./factory";
 import { env } from "./env";
 import authRouter from "./modules/auth";
+import transactionsRouter from "./modules/transactions";
 
 const app = createRouter();
 
@@ -22,6 +23,7 @@ app.use(
 
 // Internal modules
 app.route("/", authRouter);
+app.route("/api/transactions", transactionsRouter);
 
 // Basic Route
 app.get(
