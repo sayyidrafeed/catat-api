@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  BUN_VERSION: "1.3.5"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Lint, Format, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache node_modules
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bunx oxlint
+
+      - name: Check Formatting
+        run: |
+          bunx oxfmt .
+          git diff --exit-code
+
+      - name: Typecheck
+        run: bun run check
+
+      - name: Test
+        run: bun test
+
+      - name: Build
+        run: bun run build

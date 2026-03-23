@@ -29,9 +29,7 @@
           }
         },
         "operationId": "getApiAuthSession",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Get current session",
         "description": "Returns the current user's session information if authenticated."
       }
@@ -56,9 +54,7 @@
           }
         },
         "operationId": "postApiAuthSign-out",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Sign out",
         "description": "Signs out the current user by clearing their session."
       }
