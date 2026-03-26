@@ -1,33 +1,45 @@
-import { writeFileSync } from "node:fs";
-import app from "../app";
-
 /**
- * Script to generate OpenAPI specification file (openapi.json).
- * This allows static analyzers and frontend generators to use the current API spec.
+ * Generate OpenAPI spec ke file openapi.json
+ *
+ * Usage: bun run openapi:generate
+ * Output: ./openapi.json (di root project)
  */
+import * as fs from "node:fs";
+
+// Mock env vars before importing app so env validation passes
+process.env.DATABASE_URL = "postgresql://mock:mock@localhost:5432/mock";
+process.env.BETTER_AUTH_SECRET = "mock_secret_for_openapi_generation";
+process.env.GOOGLE_CLIENT_ID = "mock_id";
+process.env.GOOGLE_CLIENT_SECRET = "mock_secret";
+process.env.ALLOWED_EMAILS = "mock@example.com";
+process.env.FRONTEND_URL = "http://localhost:5173";
+
 async function generate() {
-  console.log("Generating OpenAPI specification...");
+  console.log("Generating OpenAPI schema...");
 
-  // Trigger internal request to Hono app's /.openapi endpoint
-  const res = await app.request("/openapi");
+  try {
+    // Dynamically import app so env validation happens AFTER we set the mocks
+    const { default: app } = await import("../app");
 
-  if (res.status !== 200) {
-    console.error(`Failed to generate OpenAPI: Received status ${res.status}`);
-    const text = await res.text();
-    console.error(text);
+    // app.request simulates an HTTP request without starting a real server
+    const res = await app.request("/openapi");
+    
+    if (!res.ok) {
+      throw new Error(`Failed to fetch /openapi: ${res.statusText}`);
+    }
+
+    const spec = await res.json();
+    const output = "./openapi.json";
+    fs.writeFileSync(output, JSON.stringify(spec, null, 2));
+    console.log(`✅ OpenAPI schema generated: ${output}`);
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.error("Error:", e.stack || e.message);
+    } else {
+      console.error("Error:", e);
+    }
     process.exit(1);
   }
-
-  const spec = await res.json();
-  const filePath = "./openapi.json";
-
-  writeFileSync(filePath, JSON.stringify(spec, null, 2), "utf-8");
-
-  console.log(`✅ OpenAPI specification successfully saved to ${filePath}`);
 }
 
-generate().catch((err) => {
-  console.error("❌ Unexpected error during OpenAPI generation:");
-  console.error(err);
-  process.exit(1);
-});
+generate();
