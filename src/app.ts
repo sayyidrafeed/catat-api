@@ -1,13 +1,13 @@
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { describeRoute, openAPISpecs } from "hono-openapi";
+import { describeRoute, openAPIRouteHandler } from "hono-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import notFound from "stoker/middlewares/not-found";
 import onError from "stoker/middlewares/on-error";
 
 import { createRouter } from "./factory";
 import { env } from "./env";
-import authRouter from "./modules/auth";
+import { auth, categories, transactions, profile } from "./modules";
 
 const app = createRouter();
 
@@ -21,7 +21,10 @@ app.use(
 );
 
 // Internal modules
-app.route("/", authRouter);
+app.route("/", auth);
+app.route("/api/categories", categories);
+app.route("/api/transactions", transactions);
+app.route("/api/me", profile);
 
 // Basic Route
 app.get(
@@ -47,7 +50,7 @@ app.get(
 // OpenAPI Specification using hono-openapi's middleware
 app.get(
   "/openapi",
-  openAPISpecs(app, {
+  openAPIRouteHandler(app, {
     documentation: {
       info: {
         version: "1.0.0",
