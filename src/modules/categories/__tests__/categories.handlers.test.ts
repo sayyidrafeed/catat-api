@@ -1,5 +1,4 @@
 import { describe, expect, test, mock } from "bun:test";
-import app from "@/app";
 import * as HttpStatus from "stoker/http-status-codes";
 
 // Mock Service
@@ -42,6 +41,8 @@ mock.module("@/middlewares/auth.middleware", () => ({
     return next();
   },
 }));
+
+const app = (await import("@/app")).default;
 
 describe("categories.handlers", () => {
   test("POST /api/categories returns 201", async () => {
