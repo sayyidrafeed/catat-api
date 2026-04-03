@@ -8,6 +8,7 @@
     "start": "bun run dist/src/index.js",
     "fl": "oxlint && oxfmt --write",
     "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
     "lint": "oxlint",
     "check": "tsgo --noEmit",
     "db:push": "drizzle-kit push",

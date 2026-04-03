@@ -34,3 +34,6 @@ coverage/
 # Misc
 *.tgz
 .env.test
+
+# Generated OpenAPI spec
+openapi.json
