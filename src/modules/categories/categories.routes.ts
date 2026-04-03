@@ -1,7 +1,7 @@
-import { describeRoute, resolver, validator } from "hono-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatus from "stoker/http-status-codes";
 
-import { createRouter } from "@/factory";
+import { createRouter, errorResponseSchema } from "@/factory";
 import { requireAuth } from "@/middlewares/auth.middleware";
 
 import * as handlers from "./categories.handlers";
@@ -12,32 +12,48 @@ const categoriesRouter = createRouter();
 // Middleware
 categoriesRouter.use(requireAuth());
 
-categoriesRouter.post(
-  "/",
-  describeRoute({
+categoriesRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/",
     tags: ["Categories"],
     summary: "Create a new category",
     description: "Creates a custom category for the authenticated user.",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: schema.insertCategorySchema,
+          },
+        },
+      },
+    },
     responses: {
       [HttpStatus.CREATED]: {
         description: "Category created successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectCategorySchema),
+            schema: schema.selectCategorySchema,
           },
         },
       },
       [HttpStatus.UNPROCESSABLE_ENTITY]: {
         description: "Validation error",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
   handlers.createCategoryHandler,
 );
 
-categoriesRouter.get(
-  "/",
-  describeRoute({
+categoriesRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/",
     tags: ["Categories"],
     summary: "List all categories",
     description:
@@ -47,7 +63,7 @@ categoriesRouter.get(
         description: "List of categories retrieved successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectCategorySchema.array()),
+            schema: schema.selectCategorySchema.array(),
           },
         },
       },
@@ -56,73 +72,109 @@ categoriesRouter.get(
   handlers.getCategoriesHandler,
 );
 
-categoriesRouter.get(
-  "/:id",
-  describeRoute({
+categoriesRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/:id",
     tags: ["Categories"],
     summary: "Get a specific category",
     description: "Returns a single category and its metadata.",
+    request: {
+      params: schema.categoryParamSchema,
+    },
     responses: {
       [HttpStatus.OK]: {
         description: "Category retrieved successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectCategorySchema),
+            schema: schema.selectCategorySchema,
           },
         },
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Category not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
-  validator("param", schema.categoryParamSchema),
   handlers.getCategoryHandler,
 );
 
-categoriesRouter.patch(
-  "/:id",
-  describeRoute({
+categoriesRouter.openapi(
+  createRoute({
+    method: "patch",
+    path: "/:id",
     tags: ["Categories"],
     summary: "Update a category",
     description: "Partial update of a category's fields.",
+    request: {
+      params: schema.categoryParamSchema,
+      body: {
+        content: {
+          "application/json": {
+            schema: schema.patchCategorySchema,
+          },
+        },
+      },
+    },
     responses: {
       [HttpStatus.OK]: {
         description: "Category updated successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectCategorySchema),
+            schema: schema.selectCategorySchema,
           },
         },
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Category not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
       [HttpStatus.UNPROCESSABLE_ENTITY]: {
         description: "Validation error",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
-  validator("param", schema.categoryParamSchema),
   handlers.updateCategoryHandler,
 );
 
-categoriesRouter.delete(
-  "/:id",
-  describeRoute({
+categoriesRouter.openapi(
+  createRoute({
+    method: "delete",
+    path: "/:id",
     tags: ["Categories"],
     summary: "Delete a category",
     description: "Deletes a category and its metadata.",
+    request: {
+      params: schema.categoryParamSchema,
+    },
     responses: {
       [HttpStatus.NO_CONTENT]: {
         description: "Category deleted successfully",
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Category not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
-  validator("param", schema.categoryParamSchema),
   handlers.deleteCategoryHandler,
 );
 

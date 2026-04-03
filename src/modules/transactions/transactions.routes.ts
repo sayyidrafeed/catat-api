@@ -1,7 +1,7 @@
-import { describeRoute, resolver } from "hono-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatus from "stoker/http-status-codes";
 
-import { createRouter } from "@/factory";
+import { createRouter, errorResponseSchema } from "@/factory";
 import { requireAuth } from "@/middlewares/auth.middleware";
 
 import * as handlers from "./transactions.handlers";
@@ -12,32 +12,48 @@ const transactionsRouter = createRouter();
 // Middleware
 transactionsRouter.use(requireAuth());
 
-transactionsRouter.post(
-  "/",
-  describeRoute({
+transactionsRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/",
     tags: ["Transactions"],
     summary: "Create a new transaction",
     description: "Creates a new income or expense for the authenticated user.",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: schema.insertTransactionSchema,
+          },
+        },
+      },
+    },
     responses: {
       [HttpStatus.CREATED]: {
         description: "Transaction created successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectTransactionSchema),
+            schema: schema.selectTransactionSchema,
           },
         },
       },
       [HttpStatus.UNPROCESSABLE_ENTITY]: {
         description: "Validation error",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
   handlers.createTransactionHandler,
 );
 
-transactionsRouter.get(
-  "/",
-  describeRoute({
+transactionsRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/",
     tags: ["Transactions"],
     summary: "List all transactions",
     description:
@@ -47,7 +63,7 @@ transactionsRouter.get(
         description: "List of transactions retrieved successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectTransactionSchema.array()),
+            schema: schema.selectTransactionSchema.array(),
           },
         },
       },
@@ -56,67 +72,106 @@ transactionsRouter.get(
   handlers.getTransactionsHandler,
 );
 
-transactionsRouter.get(
-  "/:id",
-  describeRoute({
+transactionsRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/:id",
     tags: ["Transactions"],
     summary: "Get a specific transaction",
     description: "Returns a single transaction and its metadata.",
+    request: {
+      params: schema.transactionParamSchema,
+    },
     responses: {
       [HttpStatus.OK]: {
         description: "Transaction retrieved successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectTransactionSchema),
+            schema: schema.selectTransactionSchema,
           },
         },
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Transaction not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
   handlers.getTransactionHandler,
 );
 
-transactionsRouter.patch(
-  "/:id",
-  describeRoute({
+transactionsRouter.openapi(
+  createRoute({
+    method: "patch",
+    path: "/:id",
     tags: ["Transactions"],
     summary: "Update a transaction",
     description: "Partial update of a transaction's fields.",
+    request: {
+      params: schema.transactionParamSchema,
+      body: {
+        content: {
+          "application/json": {
+            schema: schema.patchTransactionSchema,
+          },
+        },
+      },
+    },
     responses: {
       [HttpStatus.OK]: {
         description: "Transaction updated successfully",
         content: {
           "application/json": {
-            schema: resolver(schema.selectTransactionSchema),
+            schema: schema.selectTransactionSchema,
           },
         },
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Transaction not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
       [HttpStatus.UNPROCESSABLE_ENTITY]: {
         description: "Validation error",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
   handlers.updateTransactionHandler,
 );
 
-transactionsRouter.delete(
-  "/:id",
-  describeRoute({
+transactionsRouter.openapi(
+  createRoute({
+    method: "delete",
+    path: "/:id",
     tags: ["Transactions"],
     summary: "Delete a transaction",
     description: "Deletes a transaction and its metadata.",
+    request: {
+      params: schema.transactionParamSchema,
+    },
     responses: {
       [HttpStatus.NO_CONTENT]: {
         description: "Transaction deleted successfully",
       },
       [HttpStatus.NOT_FOUND]: {
         description: "Transaction not found",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
+          },
+        },
       },
     },
   }),
