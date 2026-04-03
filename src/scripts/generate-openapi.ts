@@ -23,7 +23,7 @@ async function generate() {
 
     // app.request simulates an HTTP request without starting a real server
     const res = await app.request("/openapi");
-    
+
     if (!res.ok) {
       throw new Error(`Failed to fetch /openapi: ${res.statusText}`);
     }
