@@ -7,6 +7,7 @@
 import * as fs from "node:fs";
 
 // Mock env vars before importing app so env validation passes
+process.env.NODE_ENV = "test";
 process.env.DATABASE_URL = "postgresql://mock:mock@localhost:5432/mock";
 process.env.BETTER_AUTH_SECRET = "mock_secret_for_openapi_generation";
 process.env.GOOGLE_CLIENT_ID = "mock_id";
@@ -22,10 +23,10 @@ async function generate() {
     const { default: app } = await import("../app");
 
     // app.request simulates an HTTP request without starting a real server
-    const res = await app.request("/openapi");
-    
+    const res = await app.request("/api/openapi.json");
+
     if (!res.ok) {
-      throw new Error(`Failed to fetch /openapi: ${res.statusText}`);
+      throw new Error(`Failed to fetch /api/openapi.json: ${res.statusText}`);
     }
 
     const spec = await res.json();

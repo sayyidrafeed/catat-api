@@ -1,13 +1,18 @@
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { describeRoute, openAPISpecs } from "hono-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import notFound from "stoker/middlewares/not-found";
 import onError from "stoker/middlewares/on-error";
+import * as HttpStatus from "stoker/http-status-codes";
 
-import { createRouter } from "./factory";
+import { createRouter, generateOpenAPISpec } from "./factory";
 import { env } from "./env";
-import authRouter from "./modules/auth";
+import { auth, categories, transactions, profile } from "./modules";
+import {
+  getCachedSpec,
+  setCachedSpec,
+  invalidateCache,
+} from "./lib/openapi-cache";
 
 const app = createRouter();
 
@@ -21,48 +26,42 @@ app.use(
 );
 
 // Internal modules
-app.route("/", authRouter);
+app.route("/", auth);
+app.route("/api/categories", categories);
+app.route("/api/transactions", transactions);
+app.route("/api/me", profile);
 
 // Basic Route
-app.get(
-  "/",
-  describeRoute({
-    summary: "Health Check",
-    description:
-      "Returns a simple message to verify the API is up and running.",
-    responses: {
-      200: {
-        description: "Successful response",
-        content: {
-          "text/plain": {
-            schema: { type: "string", example: "Catat API is up and running!" },
-          },
-        },
-      },
-    },
-  }),
-  (c) => c.text("Catat API is up and running!"),
-);
+app.get("/", (c) => c.text("Catat API is up and running!"));
 
-// OpenAPI Specification using hono-openapi's middleware
-app.get(
-  "/openapi",
-  openAPISpecs(app, {
-    documentation: {
-      info: {
-        version: "1.0.0",
-        title: "Catat API Documentations",
-        description: "API for Catat Backend Built with Hono",
-      },
-    },
-  }),
-);
+// OpenAPI Specification with in-memory caching
+app.get("/api/openapi.json", (c) => {
+  const cached = getCachedSpec();
+  if (cached) {
+    return c.json(cached);
+  }
+
+  const spec = generateOpenAPISpec(app);
+  setCachedSpec(spec);
+  return c.json(spec);
+});
+
+app.post("/api/openapi.json/invalidate", (c) => {
+  if (env.NODE_ENV !== "development") {
+    return c.json(
+      { success: false, error: { message: "Dev only" } },
+      HttpStatus.FORBIDDEN,
+    );
+  }
+  invalidateCache();
+  return c.json({ success: true });
+});
 
 // Scalar API Reference UI
 app.get(
   "/reference",
   apiReference({
-    spec: { url: "/openapi" },
+    spec: { url: "/api/openapi.json" },
   } as unknown as Parameters<typeof apiReference>[0]),
 );
 
