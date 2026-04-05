@@ -13,10 +13,7 @@ export const category = pgTable("category", {
   color: text("color"),
   parentId: uuid("parent_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const categoryRelations = relations(category, ({ one, many }) => ({

@@ -2,10 +2,15 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { transaction } from "@/db/schema";
 
-export const selectTransactionSchema = createSelectSchema(transaction);
+export const selectTransactionSchema = createSelectSchema(transaction, {
+  date: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable(),
+});
 
 export const insertTransactionSchema = createInsertSchema(transaction, {
-  date: z.string().datetime(),
+  date: z.iso.datetime(),
 })
   .omit({
     id: true,
@@ -31,8 +36,8 @@ export const transactionParamSchema = z.object({
 export const transactionQuerySchema = z.object({
   categoryId: z.string().uuid().optional(),
   type: z.enum(["income", "expense"]).optional(),
-  limit: z.string().optional().transform(Number),
-  offset: z.string().optional().transform(Number),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  offset: z.string().regex(/^\d+$/).transform(Number).optional(),
 });
 
 export type TransactionResponse = z.infer<typeof selectTransactionSchema>;

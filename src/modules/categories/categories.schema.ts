@@ -3,7 +3,10 @@ import { z } from "zod";
 
 import { category } from "@/db/schema";
 
-export const selectCategorySchema = createSelectSchema(category);
+export const selectCategorySchema = createSelectSchema(category, {
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
 
 export const insertCategorySchema = createInsertSchema(category)
   .omit({

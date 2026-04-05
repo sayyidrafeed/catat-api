@@ -1,14 +1,16 @@
 import { eq, and, desc } from "drizzle-orm";
-import { db } from "@/db";
 import { transaction } from "@/db/schema";
 import type {
   InsertTransaction,
   PatchTransaction,
 } from "./transactions.schema";
 
+type DbClient = typeof import("@/db").db;
+
 export const createTransaction = async (
   data: InsertTransaction,
   userId: string,
+  db: DbClient,
 ) => {
   const [newTransaction] = await db
     .insert(transaction)
@@ -18,7 +20,7 @@ export const createTransaction = async (
       date: new Date(data.date),
     })
     .returning();
-  return newTransaction;
+  return newTransaction ?? null;
 };
 
 export const getTransactions = async (
@@ -28,7 +30,8 @@ export const getTransactions = async (
     type?: "income" | "expense";
     limit?: number;
     offset?: number;
-  } = {},
+  },
+  db: DbClient,
 ) => {
   const conditions = [eq(transaction.userId, userId)];
 
@@ -47,7 +50,11 @@ export const getTransactions = async (
   });
 };
 
-export const getTransactionById = async (id: string, userId: string) => {
+export const getTransactionById = async (
+  id: string,
+  userId: string,
+  db: DbClient,
+) => {
   return await db.query.transaction.findFirst({
     where: and(eq(transaction.id, id), eq(transaction.userId, userId)),
   });
@@ -57,8 +64,12 @@ export const updateTransaction = async (
   id: string,
   userId: string,
   data: PatchTransaction,
+  db: DbClient,
 ) => {
-  const updateData: Record<string, unknown> = { ...data };
+  const updateData: Record<string, unknown> = {
+    ...data,
+    updatedAt: new Date(),
+  };
   if (data.date) {
     updateData.date = new Date(data.date);
   }
@@ -68,13 +79,17 @@ export const updateTransaction = async (
     .set(updateData)
     .where(and(eq(transaction.id, id), eq(transaction.userId, userId)))
     .returning();
-  return updated;
+  return updated ?? null;
 };
 
-export const deleteTransaction = async (id: string, userId: string) => {
+export const deleteTransaction = async (
+  id: string,
+  userId: string,
+  db: DbClient,
+) => {
   const [deleted] = await db
     .delete(transaction)
     .where(and(eq(transaction.id, id), eq(transaction.userId, userId)))
     .returning();
-  return deleted;
+  return deleted ?? null;
 };

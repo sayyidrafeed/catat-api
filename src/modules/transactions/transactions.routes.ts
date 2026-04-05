@@ -58,12 +58,23 @@ transactionsRouter.openapi(
     summary: "List all transactions",
     description:
       "Returns a paginated and filtered list of transactions for the authenticated user.",
+    request: {
+      query: schema.transactionQuerySchema,
+    },
     responses: {
       [HttpStatus.OK]: {
         description: "List of transactions retrieved successfully",
         content: {
           "application/json": {
             schema: schema.selectTransactionSchema.array(),
+          },
+        },
+      },
+      [HttpStatus.UNPROCESSABLE_ENTITY]: {
+        description: "Validation error",
+        content: {
+          "application/json": {
+            schema: errorResponseSchema,
           },
         },
       },

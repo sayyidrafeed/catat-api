@@ -1,8 +1,9 @@
 import { describe, expect, test, mock } from "bun:test";
 
-// Mock DB
-mock.module("@/db", () => ({
-  db: {
+import * as service from "@/modules/profile/profile.service";
+
+describe("profile.service", () => {
+  const createDbMock = () => ({
     query: {
       user: {
         findFirst: mock(() => ({
@@ -26,26 +27,29 @@ mock.module("@/db", () => ({
         returning: mock(() => [{ id: "user-1" }]),
       })),
     })),
-  },
-}));
+  });
 
-import * as service from "../profile.service";
-
-describe("profile.service", () => {
   test("getProfile returns user data", async () => {
-    const result = await service.getProfile("user-1");
+    const db = createDbMock();
+    const result = await service.getProfile("user-1", db as never);
     expect(result?.name).toBe("John Doe");
   });
 
   test("updateProfile returns updated user data", async () => {
-    const result = await service.updateProfile("user-1", {
-      name: "John Updated",
-    });
-    expect(result.name).toBe("John Updated");
+    const db = createDbMock();
+    const result = await service.updateProfile(
+      "user-1",
+      {
+        name: "John Updated",
+      },
+      db as never,
+    );
+    expect(result?.name).toBe("John Updated");
   });
 
   test("deleteAccount returns deleted id", async () => {
-    const result = await service.deleteAccount("user-1");
-    expect(result.id).toBe("user-1");
+    const db = createDbMock();
+    const result = await service.deleteAccount("user-1", db as never);
+    expect(result?.id).toBe("user-1");
   });
 });

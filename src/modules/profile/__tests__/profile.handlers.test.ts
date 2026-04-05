@@ -1,4 +1,4 @@
-import { describe, expect, test, mock } from "bun:test";
+import { afterAll, describe, expect, test, mock } from "bun:test";
 import * as HttpStatus from "stoker/http-status-codes";
 
 // Mock Service
@@ -31,6 +31,10 @@ mock.module("@/middlewares/auth.middleware", () => ({
 const { default: app } = await import("@/app");
 
 describe("profile.handlers", () => {
+  afterAll(() => {
+    mock.restore();
+  });
+
   test("GET /api/me returns 200", async () => {
     const res = await app.request("/api/me");
     expect(res.status).toBe(HttpStatus.OK);
@@ -47,6 +51,15 @@ describe("profile.handlers", () => {
     expect(res.status).toBe(HttpStatus.OK);
     const body = (await res.json()) as { name: string };
     expect(body.name).toBe("John Updated");
+  });
+
+  test("PATCH /api/me returns 422 for invalid body", async () => {
+    const res = await app.request("/api/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: "not-a-url" }),
+    });
+    expect(res.status).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
   });
 
   test("DELETE /api/me returns 204", async () => {
