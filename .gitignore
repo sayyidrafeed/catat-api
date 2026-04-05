@@ -11,7 +11,7 @@ build/
 .env.*.local
 
 # Drizzle
-drizzle/
+# drizzle/
 
 # Logs
 *.log
@@ -37,3 +37,5 @@ coverage/
 
 # Generated OpenAPI spec
 openapi.json
+
+plan.md
